@@ -7,15 +7,20 @@
 :root {
     --font-family: 'Coiny', cursive;
     --font-family: 'Open Sans', sans-ser;
-    --clr-light: #f0e9e9;
-    --clr-purple: #9b5de5;
-    --clr-pink: #f15bb5;
-    --clr-yellow: #fee440;
+    --clr-light: #f1faeeff;
+    --clr-purple: #457b9dff;
+    --clr-pink: #a8dadcff;
+    --clr-yellow: #fca311;
     --clr-blue: #00bbf9;
     --clr-green: #00f5d4;
-    --clr-selection-bg: #cb3d92;
+    --clr-selection-bg: #e63946ff;
     --clr-selection-text: #f4f0f0;
     --clr-background: #06070a;
+    --imperial-red: #e63946ff;
+    --honeydew: #f1faeeff;
+    --powder-blue: #a8dadcff;
+    --celadon-blue: #457b9dff;
+    --prussian-blue: #1d3557ff;
 }
 
 html{

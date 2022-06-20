@@ -101,7 +101,7 @@ export const presaleMint = async (mintAmount) => {
   } catch (error) {
     return {
       success: false,
-      status: '😞 Smth went wrong:' + error.message
+      status: 'Error:' + error.message
     }
   }
 }
@@ -148,7 +148,7 @@ export const publicMint = async (mintAmount) => {
   } catch (error) {
     return {
       success: false,
-      status: '😞 Smth went wrong:' + error.message
+      status: 'Error: ' + error.message
     }
   }
 }
