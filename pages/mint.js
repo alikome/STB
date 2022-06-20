@@ -299,7 +299,7 @@ export default function Mint() {
                 <span className="break-all ...">{config.contractAddress}</span>
               </a>
             </div>
-            <footer className='min-w-full text-gray-200 py-14 px-4 md:px-0'>
+            <footer className='min-w-full text-gray-200 py-8 px-4 md:px-0'>
         <div className='flex items-center container mx-auto max-w-5xl justify-between h-full'>
         <Link href="/">
             <a className="font-coiny text-xl md:text-3xl font-bold">
