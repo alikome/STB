@@ -4,55 +4,60 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import '@openzeppelin/contracts/finance/PaymentSplitter.sol';
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 
-contract SurvivingTheBear is 
+contract TastyTest2 is 
     ERC721, 
     Ownable, 
-    ReentrancyGuard, 
-    PaymentSplitter 
+    ReentrancyGuard
 {
     using Strings for uint256;
     using Counters for Counters.Counter;
 
     bytes32 public root;
+    bytes32 public rootGA;
     
     address proxyRegistryAddress;
 
-    uint256 public maxSupply = 5000;
+    uint256 public maxSupply = 100;
 
-    string public baseURI; 
+    string public baseURI = "ipfs://QmQSfWwHD27sYjqJwrted6dyw87ScZMRffqTk5WZYujLdJ/"; 
     string public notRevealedUri = "ipfs://QmYUuwLoiRb8woXwJCCsr1gvbr8E21KuxRtmVBmnH1tZz7/hidden.json";
     string public baseExtension = ".json";
 
-    bool public paused = false;
-    bool public revealed = false;
+    bool public paused = true;
+    bool public revealed = true;
     bool public presaleM = false;
     bool public publicM = false;
+    bool public giveawayM = false;
 
     uint256 presaleAmountLimit = 5; //max mint per wallet
     mapping(address => uint256) public _presaleClaimed;
+
+    uint256 ownerAmountLimit = 20; //max mint per wallet for Owner
+    mapping(address => uint256) public _ownerClaimed;
+
+    uint256 giveawayAmountLimit = 1; //max mint per wallet for Giveaway
+    mapping(address => uint256) public _giveawayClaimed;
 
     uint256 _price = 9000000000000000; // 0.009 ETH
 
     Counters.Counter private _tokenIds;
 
-    uint256[] private _teamShares = [50 ,50]; // TEAM
-    address[] private _team = [
-        0xa5C34Dbf424fAb7f50F4F5704dB2fB6c9B486026,
-        0x69eB97ef47F711545a9Ca79C8633298661c80DAD // Admin Account
-    ];
-
-    constructor(string memory uri, bytes32 merkleroot, address _proxyRegistryAddress)
-        ERC721("SurvivingTheBear", "STB")
-        PaymentSplitter(_team, _teamShares) // Split the payment based on the teamshares percentages
+    constructor(
+        string memory uri, 
+        bytes32 merkleroot, 
+        bytes32 merklerootGA,
+        address _proxyRegistryAddress
+        )
+        ERC721("TastyTest", "TTT")
         ReentrancyGuard() // A modifier that can prevent reentrancy during certain functions
     {
         root = merkleroot;
+        rootGA = merklerootGA;
         proxyRegistryAddress = _proxyRegistryAddress;
 
         setBaseURI(uri);
@@ -77,8 +82,15 @@ contract SurvivingTheBear is
         root = merkleroot;
     }
 
+    function setMerkleRootGA(bytes32 merklerootGA) 
+    onlyOwner 
+    public 
+    {
+        rootGA = merklerootGA;
+    }
+
     modifier onlyAccounts () {
-        require(msg.sender == tx.origin, "Not allowed origin");
+        require(msg.sender == tx.origin, "NA origin");
         _;
     }
 
@@ -87,7 +99,16 @@ contract SurvivingTheBear is
             _proof,
             root,
             keccak256(abi.encodePacked(msg.sender))
-            ) == true, "Not allowed origin");
+            ) == true, "NA origin");
+        _;
+   }
+
+   modifier isValidMerkleProofGA(bytes32[] calldata _proofGA) {
+         require(MerkleProof.verify(
+            _proofGA,
+            rootGA,
+            keccak256(abi.encodePacked(msg.sender))
+            ) == true, "NA origin");
         _;
    }
 
@@ -103,6 +124,10 @@ contract SurvivingTheBear is
         publicM = !publicM;
     }
 
+    function togglegiveAway() public onlyOwner {
+        giveawayM = !giveawayM;
+    }
+
 
     function presaleMint(address account, uint256 _amount, bytes32[] calldata _proof)
     external
@@ -110,13 +135,13 @@ contract SurvivingTheBear is
     isValidMerkleProof(_proof)
     onlyAccounts
     {
-        require(msg.sender == account,          "Not allowed");
+        require(msg.sender == account,          "NA");
         require(presaleM,                       "Presale is OFF");
         require(!paused,                        "Contract is paused");
         require(
-            _amount <= presaleAmountLimit,      "You can't mint so much tokens");
+            _amount <= presaleAmountLimit,      "Mint limit exceeded");
         require(
-            _presaleClaimed[msg.sender] + _amount <= presaleAmountLimit,  "You can't mint so much tokens");
+            _presaleClaimed[msg.sender] + _amount <= presaleAmountLimit,  "Mint limit exceeded");
 
 
         uint current = _tokenIds.current();
@@ -131,6 +156,35 @@ contract SurvivingTheBear is
         );
              
         _presaleClaimed[msg.sender] += _amount;
+
+        for (uint i = 0; i < _amount; i++) {
+            mintInternal();
+        }
+    }
+
+    function giveAwayMint(address account, uint256 _amount, bytes32[] calldata _proofGA)
+    external
+    payable
+    isValidMerkleProofGA(_proofGA)
+    onlyAccounts
+    {
+        require(msg.sender == account,          "NA");
+        require(giveawayM,                       "Giveaway is OFF");
+        require(!paused,                        "Contract is paused");
+        require(
+            _amount <= giveawayAmountLimit,      "Mint limit exceeded");
+        require(
+            _giveawayClaimed[msg.sender] + _amount <= giveawayAmountLimit,  "Mint limit exceeded");
+
+
+        uint current = _tokenIds.current();
+
+        require(
+            current + _amount <= maxSupply,
+            "Max supply exceeded"
+        );
+             
+        _giveawayClaimed[msg.sender] += _amount;
 
         for (uint i = 0; i < _amount; i++) {
             mintInternal();
@@ -231,6 +285,37 @@ contract SurvivingTheBear is
 
         return super.isApprovedForAll(owner, operator);
     }
+
+
+    //Owner minting function
+     function ownerMinting(uint256 _amount) public onlyOwner {
+    {
+        require(
+            _amount <= ownerAmountLimit,      "Mint limit exceeded");
+        require(
+            _ownerClaimed[msg.sender] + _amount <= ownerAmountLimit,  "Mint limit exceeded");
+
+        require(_amount > 0, "zero amount");
+
+        uint current = _tokenIds.current();
+
+        require(
+            current + _amount <= maxSupply,
+            "Max supply exceeded"
+        );
+
+        _ownerClaimed[msg.sender] += _amount;
+
+        for (uint i = 0; i < _amount; i++) {
+            mintInternal();
+        }
+    }
+  }
+
+    function withdraw() public onlyOwner {
+    (bool os, ) = payable(owner()).call{value: address(this).balance}("");
+    require(os);
+  }
 }
 
 
