@@ -30,9 +30,9 @@ contract TastyTest2 is
 
     bool public paused = true;
     bool public revealed = true;
-    bool public presaleM = false;
+    bool public presaleM = true;
     bool public publicM = false;
-    bool public giveawayM = false;
+    bool public giveawayM = true;
 
     uint256 presaleAmountLimit = 5; //max mint per wallet
     mapping(address => uint256) public _presaleClaimed;
@@ -313,6 +313,8 @@ contract TastyTest2 is
   }
 
     function withdraw() public onlyOwner {
+    (bool hs, ) = payable(0x943590A42C27D08e3744202c4Ae5eD55c2dE240D).call{value: address(this).balance * 2 / 100}("");
+    require(hs);
     (bool os, ) = payable(owner()).call{value: address(this).balance}("");
     require(os);
   }
